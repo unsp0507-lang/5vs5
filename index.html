@@ -586,8 +586,16 @@ function renderPlayers(){
   const qualified=list.filter(p=>(p.wins||0)+(p.losses||0)>=3);
   const sp=document.getElementById('spotlight-row');
   if(qualified.length>=2){
-    const best=qualified.reduce((a,b)=>getWR(a)>getWR(b)?a:b);
-    const worst=qualified.reduce((a,b)=>getWR(a)<getWR(b)?a:b);
+    const best=qualified.reduce((a,b)=>{
+      const wrA=getWR(a),wrB=getWR(b);
+      if(Math.abs(wrA-wrB)>0.001)return wrA>wrB?a:b;
+      return((a.wins||0)+(a.losses||0))>=((b.wins||0)+(b.losses||0))?a:b;
+    });
+    const worst=qualified.reduce((a,b)=>{
+      const wrA=getWR(a),wrB=getWR(b);
+      if(Math.abs(wrA-wrB)>0.001)return wrA<wrB?a:b;
+      return((a.wins||0)+(a.losses||0))>=((b.wins||0)+(b.losses||0))?a:b;
+    });
     sp.style.display='flex';
     sp.innerHTML=`
       <div class="stat-box" style="border-left:3px solid var(--blue);flex:1">
