@@ -1252,12 +1252,16 @@ function saveMatchResult(winCapId){
   // 선수 전적 업데이트
   cs.forEach(cap=>{
     const won=cap.id===winCapId;
-    const all=[cap,...(matchTeams[cap.id]||[]).map(id=>players[id]).filter(Boolean)];
-    all.forEach(p=>{
-      const cur=players[p.id||p];
+    const capCur=players[cap.id];
+    if(capCur){
+      if(won) updates[`draft/players/${cap.id}/wins`]=(capCur.wins||0)+1;
+      else updates[`draft/players/${cap.id}/losses`]=(capCur.losses||0)+1;
+    }
+    (matchTeams[cap.id]||[]).forEach(pid=>{
+      const cur=players[pid];
       if(!cur)return;
-      if(won) updates[`draft/players/${p.id||p}/wins`]=(cur.wins||0)+1;
-      else updates[`draft/players/${p.id||p}/losses`]=(cur.losses||0)+1;
+      if(won) updates[`draft/players/${pid}/wins`]=(cur.wins||0)+1;
+      else updates[`draft/players/${pid}/losses`]=(cur.losses||0)+1;
     });
   });
 
@@ -1289,7 +1293,7 @@ function renderMatchHistory(){
     return`<div class="card" style="margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:12px;font-weight:700;color:var(--text2)">${dateStr}</span>
-        ${isAdmin?`<button class="btn btn-red btn-sm" onclick="deleteMatch('${id}')">🗑</button>`:''}
+        <button class="btn btn-red btn-sm" onclick="deleteMatch('${id}')">🗑</button>
       </div>
       ${m.teams.map((t,i)=>{
         const colors=['var(--blue)','var(--red)'];
@@ -1304,6 +1308,7 @@ function renderMatchHistory(){
   }).join('');
 }
 function deleteMatch(id){
+  if(!isAdmin){toast('🔐 관리자만 삭제할 수 있어요');return}
   if(!confirm('경기 기록을 삭제할까요?\n선수 전적은 그대로 유지돼요. 잘못된 전적은 선수 명단에서 -W/-L로 조정하세요.'))return;
   db.ref('draft/matches/'+id).remove();
   toast('🗑 경기 기록 삭제됐어요');
