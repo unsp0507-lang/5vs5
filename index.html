@@ -1438,32 +1438,10 @@ function renderSeasonReport(){
   const q=QUARTERS[currentQuarter];
   if(!q){el.innerHTML='';return}
 
-  // 1Q: players 데이터 직접 사용. players 아직 없으면 표시만 하고 종료 (Firebase 로드 후 자동 재호출됨)
-  const is1Q=(currentQuarter==='2026Q1');
   const allStats={};
   const captainStats={};
 
-  if(is1Q){
-    if(!Object.keys(players).length){
-      el.innerHTML='<div class="card"><p class="empty" style="padding:20px 0">⏳ 데이터 불러오는 중...</p></div>';
-      return;
-    }
-    Object.entries(players).forEach(([id,p])=>{
-      const w=p.wins||0,l=p.losses||0;
-      if(w+l===0)return;
-      allStats[id]={id,name:p.name,wins:w,losses:l};
-    });
-    Object.values(matchHistory).forEach(m=>{
-      const d=new Date(m.date);
-      const s=new Date('2026-01-01T00:00:00'),e=new Date('2026-03-31T23:59:59');
-      if(d<s||d>e)return;
-      m.teams.forEach(t=>{
-        if(!captainStats[t.capId])captainStats[t.capId]={id:t.capId,name:t.capName,wins:0,losses:0,games:0};
-        captainStats[t.capId].games++;
-        if(t.won)captainStats[t.capId].wins++;else captainStats[t.capId].losses++;
-      });
-    });
-  } else {
+  {
     const s=new Date(q.start+'T00:00:00'),e=new Date(q.end+'T23:59:59');
     const matches=Object.values(matchHistory).filter(m=>{const d=new Date(m.date);return d>=s&&d<=e;});
     if(!matches.length){
@@ -1495,7 +1473,7 @@ function renderSeasonReport(){
   const capRanked=Object.values(captainStats).map(p=>({...p,wr:p.wins/(p.games||1)})).filter(p=>p.games>=2).sort((a,b)=>b.wr-a.wr||b.games-a.games);
   const mostActive=Object.values(allStats).map(p=>({...p,total:p.wins+p.losses})).sort((a,b)=>b.total-a.total).slice(0,3);
   const totalParticipants=Object.keys(allStats).length;
-  const matchCount=is1Q?Object.values(matchHistory).filter(m=>{const d=new Date(m.date);return d>=new Date('2026-01-01')&&d<=new Date('2026-03-31');}).length:Object.values(matchHistory).filter(m=>{const d=new Date(m.date);const s=new Date(q.start),e=new Date(q.end+'T23:59:59');return d>=s&&d<=e;}).length;
+  const matchCount=Object.values(matchHistory).filter(m=>{const d=new Date(m.date);const s=new Date(q.start+'T00:00:00'),e=new Date(q.end+'T23:59:59');return d>=s&&d<=e;}).length;
 
   function wc(wr){return wr>0.55?'var(--blue)':wr>=0.45?'var(--green)':'var(--red)';}
 
